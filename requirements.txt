@@ -1,0 +1,5 @@
+insightface>=0.7
+onnxruntime-gpu
+onnx
+opencv-python
+numpy
