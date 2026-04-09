@@ -3,3 +3,7 @@ onnxruntime-gpu
 onnx
 opencv-python
 numpy
+aiortc
+av
+websockets
+pyvirtualcam

@@ -75,6 +75,58 @@ python main.py face.jpg --model ./models/inswapper_128.onnx
 
 Press **q** to quit the live preview window.
 
+## WebRTC (GPU server + Windows client + OBS Virtual Camera)
+
+This repo also includes a simple **1:1 WebRTC** setup so you can run the heavy face-swap on a **GPU server** and use a lightweight **Windows client** that outputs the swapped stream as a **Virtual Webcam** for OBS.
+
+### Components
+
+- **Signaling server**: `server/signaling_ws.py` (WebSocket relay for SDP/ICE)
+- **GPU WebRTC face-swap server**: `server/webrtc_server.py`
+- **Windows client -> VirtualCam**: `client/client_virtualcam.py`
+
+### Run (LAN / same network)
+
+1) **On the GPU server**
+
+Start signaling:
+
+```bash
+python -m server.signaling_ws --host 0.0.0.0 --port 8765
+```
+
+Start the WebRTC face-swap server (set your source face image path):
+
+```bash
+python -m server.webrtc_server --signal ws://<SERVER_IP>:8765 --room default --source face.jpg --max-fps 30
+```
+
+2) **On your Windows PC**
+
+Run the client:
+
+```bash
+python -m client.client_virtualcam --signal ws://<SERVER_IP>:8765 --room default --camera 0 --width 640 --height 480 --fps 30
+```
+
+3) **In OBS**
+
+- Add **Video Capture Device**
+- Choose the virtual camera device created by `pyvirtualcam`
+
+### Internet access (STUN/TURN)
+
+WebRTC usually needs ICE help when you’re not on the same LAN.
+
+- **STUN**: enabled by default (`stun:stun.l.google.com:19302`) and often works for many home networks.
+- **TURN**: for reliable connectivity across strict NATs/firewalls, run a TURN server (e.g., **coturn**) and add it to both the server/client ICE configuration (future enhancement).
+
+### Performance notes
+
+- Start at **640x480** and **30 FPS**.
+- Use `--max-fps` on the GPU server to cap processing and avoid backlog/latency spikes.
+- If latency grows over time, reduce FPS/resolution and/or increase `--proc-scale` (detection scale) trade-offs.
+
 ### CLI flags
 
 | Flag | Default | Description |
